@@ -13,6 +13,6 @@ export interface Note {
 }
 
 export interface PersistedNotesState {
-  version: 1
+  schemaVersion: 1
   notes: Note[]
 }
