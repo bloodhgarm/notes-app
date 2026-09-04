@@ -17,7 +17,7 @@ const isTodo = (value: unknown): value is Todo => {
   )
 }
 
-const isNote = (value: unknown): value is Note => {
+export const isNote = (value: unknown): value is Note => {
   if (!value || typeof value !== 'object') {
     return false
   }

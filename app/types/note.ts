@@ -16,3 +16,9 @@ export interface PersistedNotesState {
   schemaVersion: 1
   notes: Note[]
 }
+
+export interface PersistedDraft {
+  schemaVersion: 1
+  note: Note
+  sourceUpdatedAt: string | null
+}
