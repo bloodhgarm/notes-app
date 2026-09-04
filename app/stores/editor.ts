@@ -267,6 +267,10 @@ export const useEditorStore = defineStore('editor', () => {
     resetHistory()
   }
 
+  const discardStoredDraft = (key: string): void => {
+    removeDraft(key)
+  }
+
   const finishEditing = (): Note | null => {
     flushTextChange()
 
@@ -283,6 +287,7 @@ export const useEditorStore = defineStore('editor', () => {
     canRedo,
     canUndo,
     discardDraft,
+    discardStoredDraft,
     draft,
     finishEditing,
     flushTextChange,
