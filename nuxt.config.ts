@@ -11,5 +11,11 @@ export default defineNuxtConfig({
     '@nuxt/hints',
     '@pinia/nuxt',
   ],
+  components: [
+    {
+      path: '~/components',
+      pathPrefix: false,
+    },
+  ],
   css: ['~/assets/styles/main.scss'],
 })
