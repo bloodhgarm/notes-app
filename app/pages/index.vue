@@ -47,6 +47,8 @@ const remove = () => {
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .page {
   width: min(100% - 32px, 1000px);
   margin: 0 auto;
@@ -91,7 +93,7 @@ const remove = () => {
 .empty h2 {
   color: #334155;
 }
-@media (max-width: 540px) {
+@media (max-width: $breakpoint-mobile-max) {
   .page {
     width: min(100% - 24px, 1000px);
     padding-top: 28px;

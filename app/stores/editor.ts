@@ -1,3 +1,4 @@
+import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import { readDraft, removeDraft, writeDraft } from '~/services/draft-storage'

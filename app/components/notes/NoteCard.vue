@@ -19,7 +19,9 @@ defineEmits<{ delete: [id: string] }>()
       </li>
     </ul>
     <p v-else>Задач пока нет</p>
-    <button type="button" @click="$emit('delete', note.id)">Удалить</button>
+    <BaseButton class="card__delete" variant="danger" @click="$emit('delete', note.id)">
+      Удалить
+    </BaseButton>
   </article>
 </template>
 
@@ -63,14 +65,7 @@ defineEmits<{ delete: [id: string] }>()
   margin: 0;
   color: #64748b;
 }
-.card button {
+.card__delete {
   justify-self: end;
-  padding: 0;
-  border: 0;
-  color: #b91c1c;
-  background: none;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
 }
 </style>

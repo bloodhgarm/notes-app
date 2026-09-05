@@ -37,6 +37,10 @@ withDefaults(
   outline-offset: 2px;
 }
 
+.link-button:active {
+  transform: translateY(1px);
+}
+
 .link-button--primary {
   color: #2563eb;
 }

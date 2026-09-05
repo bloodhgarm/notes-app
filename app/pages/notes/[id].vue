@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
+import { NOTES_STORAGE_KEY } from '~/services/notes-storage'
+import type { Note } from '~/types/note'
+
 const route = useRoute()
 const router = useRouter()
 const notesStore = useNotesStore()
@@ -12,6 +15,7 @@ const missing = ref(false)
 const restorePrompt = ref(false)
 const cancelPrompt = ref(false)
 const deletePrompt = ref(false)
+const externalDeletionPrompt = ref(false)
 const validationMessage = ref('')
 
 const initialize = () => {
@@ -37,25 +41,67 @@ const discardStored = () => {
   editor.discardStoredDraft(isNew.value ? 'new' : id.value)
   restorePrompt.value = false
 }
-const save = () => {
+
+const updateTitle = (value: string) => {
+  validationMessage.value = ''
+  editor.updateTitle(value)
+}
+
+const updateTodoText = (todoId: string, value: string) => {
+  validationMessage.value = ''
+  editor.updateTodoText(todoId, value)
+}
+
+const getValidatedDraft = (): Note | null => {
   editor.flushTextChange()
   const note = editor.draft
+
   if (!note || !note.title.trim()) {
     validationMessage.value = 'Введите название заметки.'
-    return
+    return null
   }
+
   if (note.todos.some((todo) => !todo.text.trim())) {
     validationMessage.value = 'Заполните текст каждой задачи или удалите пустую.'
-    return
+    return null
   }
+
+  validationMessage.value = ''
+  return {
+    ...note,
+    title: note.title.trim(),
+    todos: note.todos.map((todo) => ({ ...todo, text: todo.text.trim() })),
+  }
+}
+
+const save = () => {
+  if (externalDeletionPrompt.value) return
+
+  const note = getValidatedDraft()
+  if (!note) return
+
   const finished = editor.finishEditing()
   if (!finished) return
-  notesStore.saveNote({
-    ...finished,
-    title: finished.title.trim(),
-    todos: finished.todos.map((todo) => ({ ...todo, text: todo.text.trim() })),
-  })
+
+  notesStore.saveNote({ ...finished, title: note.title, todos: note.todos })
   notesStore.persistNow()
+  router.push('/')
+}
+
+const saveCopyAfterExternalDelete = () => {
+  const note = getValidatedDraft()
+  if (!note) return
+
+  notesStore.createNote(note.title, note.todos)
+  notesStore.persistNow()
+  editor.discardDraft()
+  externalDeletionPrompt.value = false
+  router.push('/')
+}
+
+const leaveAfterExternalDelete = () => {
+  editor.discardDraft()
+  externalDeletionPrompt.value = false
   router.push('/')
 }
 const cancel = () => {
@@ -82,14 +128,45 @@ const onKeydown = (event: KeyboardEvent) => {
   if (event.shiftKey) editor.redo()
   else editor.undo()
 }
+
+const persistDraftBeforeExit = () => {
+  if (!editor.draft) return
+  editor.flushTextChange()
+  editor.persistDraftNow()
+}
+
+const onVisibilityChange = () => {
+  if (document.visibilityState === 'hidden') persistDraftBeforeExit()
+}
+
+const onStorage = (event: StorageEvent) => {
+  notesStore.handleStorageEvent(event)
+
+  if (
+    event.key === NOTES_STORAGE_KEY &&
+    !isNew.value &&
+    editor.draft &&
+    !notesStore.getNoteById(id.value)
+  ) {
+    cancelPrompt.value = false
+    deletePrompt.value = false
+    externalDeletionPrompt.value = true
+  }
+}
+
 onMounted(() => {
   initialize()
   window.addEventListener('keydown', onKeydown)
-  window.addEventListener('storage', notesStore.handleStorageEvent)
+  window.addEventListener('storage', onStorage)
+  window.addEventListener('pagehide', persistDraftBeforeExit)
+  document.addEventListener('visibilitychange', onVisibilityChange)
 })
 onBeforeUnmount(() => {
+  persistDraftBeforeExit()
   window.removeEventListener('keydown', onKeydown)
-  window.removeEventListener('storage', notesStore.handleStorageEvent)
+  window.removeEventListener('storage', onStorage)
+  window.removeEventListener('pagehide', persistDraftBeforeExit)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
 })
 </script>
 
@@ -110,10 +187,13 @@ onBeforeUnmount(() => {
             :model-value="editor.draft.title"
             placeholder="Например, Покупки"
             :invalid="Boolean(validationMessage) && !editor.draft.title.trim()"
-            @update:model-value="editor.updateTitle"
+            aria-describedby="editor-validation"
+            @update:model-value="updateTitle"
             @blur="editor.flushTextChange"
         /></label>
-        <p v-if="validationMessage" class="error">{{ validationMessage }}</p>
+        <p v-if="validationMessage" id="editor-validation" class="error" role="alert">
+          {{ validationMessage }}
+        </p>
         <div class="toolbar">
           <BaseButton type="button" :disabled="!editor.canUndo" @click="editor.undo"
             >Отменить</BaseButton
@@ -121,38 +201,15 @@ onBeforeUnmount(() => {
             >Повторить</BaseButton
           >
         </div>
-        <section class="todos">
-          <div class="todos__heading">
-            <h2>Задачи</h2>
-            <BaseButton type="button" variant="secondary" @click="editor.addTodo"
-              >Добавить задачу</BaseButton
-            >
-          </div>
-          <ul>
-            <li v-for="todo in editor.draft.todos" :key="todo.id">
-              <BaseCheckbox
-                :id="`todo-${todo.id}`"
-                :model-value="todo.completed"
-                :aria-label="`Отметить задачу ${todo.text || ''}`"
-                @update:model-value="editor.toggleTodo(todo.id)"
-              /><BaseInput
-                :model-value="todo.text"
-                placeholder="Текст задачи"
-                :class="{ completed: todo.completed }"
-                :invalid="Boolean(validationMessage) && !todo.text.trim()"
-                @update:model-value="editor.updateTodoText(todo.id, $event)"
-                @blur="editor.flushTextChange"
-              /><button
-                type="button"
-                :aria-label="`Удалить задачу ${todo.text || ''}`"
-                @click="editor.removeTodo(todo.id)"
-              >
-                ×
-              </button>
-            </li>
-          </ul>
-          <p v-if="!editor.draft.todos.length" class="muted">Добавьте первую задачу.</p>
-        </section>
+        <TodoList
+          :todos="editor.draft.todos"
+          :show-validation="Boolean(validationMessage)"
+          @add="editor.addTodo"
+          @remove="editor.removeTodo"
+          @toggle="editor.toggleTodo"
+          @update-text="updateTodoText"
+          @flush="editor.flushTextChange"
+        />
         <footer class="actions">
           <BaseButton type="button" @click="cancelPrompt = true">Отменить редактирование</BaseButton
           ><BaseButton v-if="!isNew" type="button" variant="danger" @click="deletePrompt = true"
@@ -180,10 +237,27 @@ onBeforeUnmount(() => {
         ><BaseButton variant="danger" @click="remove">Удалить</BaseButton></template
       ></BaseModal
     >
+    <BaseModal
+      :open="externalDeletionPrompt"
+      title="Заметка удалена в другой вкладке"
+      :closable="false"
+      :close-on-escape="false"
+      :close-on-backdrop="false"
+    >
+      <p>Можно сохранить текущие изменения как новую заметку или вернуться к списку.</p>
+      <template #footer>
+        <BaseButton @click="leaveAfterExternalDelete">Вернуться к списку</BaseButton>
+        <BaseButton variant="primary" @click="saveCopyAfterExternalDelete">
+          Сохранить как новую
+        </BaseButton>
+      </template>
+    </BaseModal>
   </main>
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .editor-page {
   width: min(100% - 32px, 760px);
   margin: 0 auto;
@@ -220,57 +294,9 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
   gap: 10px;
 }
-.todos {
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-}
-.todos__heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.todos h2 {
-  margin: 0;
-  font-size: 1.125rem;
-}
-.todos ul {
-  display: grid;
-  gap: 10px;
-  margin: 20px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.todos li {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 10px;
-  align-items: center;
-}
-.todos li input[type='text'],
-.todos li input:not([type]) {
-  min-width: 0;
-}
-.todos li button {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 6px;
-  color: #b91c1c;
-  background: #fee2e2;
-  font-size: 1.4rem;
-  cursor: pointer;
-}
-.completed {
-  color: #64748b;
-  text-decoration: line-through;
-}
 .actions {
   justify-content: flex-end;
 }
-.muted,
 .error {
   margin: 0;
   color: #64748b;
@@ -278,17 +304,10 @@ onBeforeUnmount(() => {
 .error {
   color: #b91c1c;
 }
-@media (max-width: 540px) {
+@media (max-width: $breakpoint-mobile-max) {
   .editor-page {
     width: min(100% - 24px, 760px);
     padding-top: 24px;
-  }
-  .todos__heading {
-    align-items: start;
-    flex-direction: column;
-  }
-  .todos__heading .button {
-    width: 100%;
   }
   .actions > * {
     flex: 1;
