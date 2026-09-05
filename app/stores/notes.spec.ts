@@ -88,4 +88,19 @@ describe('notes store', () => {
     expect(store.isHydrated).toBe(true)
     expect(store.notes).toHaveLength(1)
   })
+
+  it('synchronizes deletion from another tab on a storage event', () => {
+    const store = useNotesStore()
+    const note = store.createNote('Shared note')
+    store.persistNow()
+
+    storage.setItem(
+      NOTES_STORAGE_KEY,
+      JSON.stringify({ schemaVersion: 1, notes: [] }),
+    )
+    store.handleStorageEvent({ key: NOTES_STORAGE_KEY } as StorageEvent)
+
+    expect(store.getNoteById(note.id)).toBeUndefined()
+    expect(store.notes).toEqual([])
+  })
 })

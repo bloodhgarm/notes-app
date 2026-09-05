@@ -4,6 +4,7 @@ import type { Note } from '~/types/note'
 
 import {
   HISTORY_LIMIT,
+  applyOperation,
   createHistoryState,
   recordOperation,
   redoOperation,
@@ -46,6 +47,33 @@ describe('note history', () => {
     expect(undoOperation({ ...note, todos: [] }, history).note.todos).toEqual([removedTodo])
   })
 
+  it('applies add, edit and toggle operations atomically', () => {
+    const addedTodo = { id: 'todo-2', text: 'Bread', completed: false }
+    const withAddedTodo = applyOperation(note, {
+      type: 'add-todo',
+      todo: addedTodo,
+      index: 1,
+    })
+    const withEditedTodo = applyOperation(withAddedTodo, {
+      type: 'set-todo-text',
+      todoId: addedTodo.id,
+      previous: 'Bread',
+      next: 'Fresh bread',
+    })
+    const withCompletedTodo = applyOperation(withEditedTodo, {
+      type: 'toggle-todo',
+      todoId: addedTodo.id,
+      previous: false,
+      next: true,
+    })
+
+    expect(withCompletedTodo.todos[1]).toEqual({
+      id: 'todo-2',
+      text: 'Fresh bread',
+      completed: true,
+    })
+  })
+
   it('clears redo history after a new operation', () => {
     const initialHistory = recordOperation(createHistoryState(), {
       type: 'set-title',
@@ -74,5 +102,9 @@ describe('note history', () => {
     }
 
     expect(history.undoStack).toHaveLength(HISTORY_LIMIT)
+  })
+
+  it('creates an empty history when the editing session is reset', () => {
+    expect(createHistoryState()).toEqual({ undoStack: [], redoStack: [] })
   })
 })
