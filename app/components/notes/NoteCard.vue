@@ -12,7 +12,7 @@ defineEmits<{ delete: [id: string] }>()
     </header>
     <ul v-if="note.todos.length">
       <li v-for="todo in note.todos.slice(0, 3)" :key="todo.id">
-        <input type="checkbox" :checked="todo.completed" disabled /><span
+        <BaseCheckbox :model-value="todo.completed" disabled aria-label="Статус задачи" /><span
           :class="{ done: todo.completed }"
           >{{ todo.text || 'Без текста' }}</span
         >

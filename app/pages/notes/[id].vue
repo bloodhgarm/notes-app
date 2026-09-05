@@ -106,10 +106,11 @@ onBeforeUnmount(() => {
       </header>
       <form @submit.prevent="save">
         <label
-          >Название заметки<input
-            :value="editor.draft.title"
+          >Название заметки<BaseInput
+            :model-value="editor.draft.title"
             placeholder="Например, Покупки"
-            @input="editor.updateTitle(($event.target as HTMLInputElement).value)"
+            :invalid="Boolean(validationMessage) && !editor.draft.title.trim()"
+            @update:model-value="editor.updateTitle"
             @blur="editor.flushTextChange"
         /></label>
         <p v-if="validationMessage" class="error">{{ validationMessage }}</p>
@@ -129,17 +130,17 @@ onBeforeUnmount(() => {
           </div>
           <ul>
             <li v-for="todo in editor.draft.todos" :key="todo.id">
-              <input
+              <BaseCheckbox
                 :id="`todo-${todo.id}`"
-                type="checkbox"
-                :checked="todo.completed"
+                :model-value="todo.completed"
                 :aria-label="`Отметить задачу ${todo.text || ''}`"
-                @change="editor.toggleTodo(todo.id)"
-              /><input
-                :value="todo.text"
+                @update:model-value="editor.toggleTodo(todo.id)"
+              /><BaseInput
+                :model-value="todo.text"
                 placeholder="Текст задачи"
                 :class="{ completed: todo.completed }"
-                @input="editor.updateTodoText(todo.id, ($event.target as HTMLInputElement).value)"
+                :invalid="Boolean(validationMessage) && !todo.text.trim()"
+                @update:model-value="editor.updateTodoText(todo.id, $event)"
                 @blur="editor.flushTextChange"
               /><button
                 type="button"
