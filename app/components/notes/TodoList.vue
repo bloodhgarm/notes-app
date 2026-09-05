@@ -41,35 +41,35 @@ defineEmits<{
 @use '~/assets/styles/tokens' as *;
 
 .todo-list {
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  padding: $space-5;
+  border: $border-width solid $color-border-default;
+  border-radius: $radius-xl;
+  background: $color-surface-raised;
 }
 
 .todo-list__heading {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: $space-4;
 }
 
 .todo-list h2 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: $font-size-heading-sm;
 }
 
 .todo-list ul {
   display: grid;
-  gap: 6px;
-  margin: 14px -6px 0;
+  gap: $space-1-5;
+  margin: $space-3-5 (-$space-1-5) 0;
   padding: 0;
   list-style: none;
 }
 
 .todo-list__empty {
-  margin: 20px 0 0;
-  color: #64748b;
+  margin: $space-5 0 0;
+  color: $color-text-muted;
 }
 
 @media (max-width: $breakpoint-mobile-max) {

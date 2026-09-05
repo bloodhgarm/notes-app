@@ -46,6 +46,14 @@ bun run build
 - `app/utils` — чистые операции над заметкой и memory-efficient history.
 - `app/types` — доменные типы Note, Todo и history operations.
 
+## Design tokens
+
+Все повторяющиеся визуальные значения собраны в `app/assets/styles/_tokens.scss`. Токены
+разделены на core palette, semantic colors, typography, spacing, component sizing/layout,
+borders/radii, elevation/focus, motion, state opacity, layers и breakpoints. Компоненты используют
+семантические имена вроде `$color-primary`, `$color-text-muted` и `$color-border-control`, поэтому
+палитру и состояния интерфейса можно менять централизованно.
+
 ## Undo / Redo
 
 История реализована без сторонних библиотек и без полных снимков заметки. В стеках хранятся

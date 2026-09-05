@@ -26,44 +26,46 @@ defineEmits<{ delete: [id: string] }>()
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .card {
   display: grid;
-  gap: 16px;
-  padding: 20px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  gap: $space-4;
+  padding: $space-5;
+  border: $border-width solid $color-border-default;
+  border-radius: $radius-xl;
+  background: $color-surface-raised;
 }
 .card header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: $space-3;
 }
 .card h2 {
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 1.125rem;
+  font-size: $font-size-heading-sm;
 }
 .card ul {
   display: grid;
-  gap: 10px;
+  gap: $space-2-5;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .card li {
   display: flex;
-  gap: 10px;
+  gap: $space-2-5;
   align-items: center;
-  color: #475569;
+  color: $color-text-secondary;
 }
 .done {
   text-decoration: line-through;
-  opacity: 0.7;
+  opacity: $opacity-completed;
 }
 .card p {
   margin: 0;
-  color: #64748b;
+  color: $color-text-muted;
 }
 .card__delete {
   justify-self: end;

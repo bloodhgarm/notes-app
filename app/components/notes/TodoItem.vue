@@ -41,23 +41,25 @@ defineEmits<{
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .todo-item {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 10px;
+  gap: $space-2-5;
   align-items: center;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background-color 0.15s ease;
+  padding: $space-1-5;
+  border-radius: $radius-lg;
+  transition: background-color $duration-fast $easing-standard;
 }
 
 .todo-item:hover,
 .todo-item:focus-within {
-  background: #f8fafc;
+  background: $color-surface-page;
 }
 
 .todo-item--checked :deep(.base-input) {
-  color: #64748b;
+  color: $color-text-muted;
   text-decoration: line-through;
 }
 </style>

@@ -18,41 +18,43 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .base-input {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  color: #1e293b;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-height: $control-height-lg;
+  padding: $space-2-5 $space-3;
+  border: $border-width solid $color-border-control;
+  border-radius: $radius-lg;
+  color: $color-text-primary;
+  background: $color-surface-raised;
+  box-shadow: $shadow-control;
   font: inherit;
-  line-height: 1.4;
+  line-height: $line-height-control;
   transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
+    border-color $duration-fast $easing-standard,
+    box-shadow $duration-fast $easing-standard;
 }
 .base-input::placeholder {
-  color: #94a3b8;
+  color: $color-text-placeholder;
 }
 .base-input:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: $color-border-strong;
 }
 .base-input:focus {
-  border-color: #2563eb;
+  border-color: $color-primary;
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 0 0 $focus-ring-width $focus-ring-control;
 }
 .base-input:disabled {
-  color: #94a3b8;
-  background: #f1f5f9;
+  color: $color-disabled-text;
+  background: $color-disabled-surface;
   cursor: not-allowed;
 }
 .base-input--invalid {
-  border-color: #dc2626;
+  border-color: $color-danger;
 }
 .base-input--invalid:focus {
-  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.16);
+  box-shadow: 0 0 0 $focus-ring-width $focus-ring-danger;
 }
 </style>

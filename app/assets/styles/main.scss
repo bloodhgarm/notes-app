@@ -1,7 +1,9 @@
+@use 'tokens' as *;
+
 :root {
-  font-family: Inter, Arial, sans-serif;
-  color: #1f2937;
-  background: #f8fafc;
+  font-family: $font-family-base;
+  color: $color-text-primary;
+  background: $color-surface-page;
 }
 
 * {

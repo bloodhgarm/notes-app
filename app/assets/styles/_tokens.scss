@@ -1,6 +1,128 @@
+// Core palette
+$palette-white: #fff;
+$palette-slate-50: #f8fafc;
+$palette-slate-100: #f1f5f9;
+$palette-slate-200: #e2e8f0;
+$palette-slate-300: #cbd5e1;
+$palette-slate-400: #94a3b8;
+$palette-slate-500: #64748b;
+$palette-slate-600: #475569;
+$palette-slate-700: #334155;
+$palette-slate-800: #1e293b;
+$palette-slate-900: #0f172a;
+$palette-blue-50: #eff6ff;
+$palette-blue-600: #2563eb;
+$palette-blue-700: #1d4ed8;
+$palette-blue-800: #1e40af;
+$palette-red-50: #fef2f2;
+$palette-red-100: #fee2e2;
+$palette-red-200: #fecaca;
+$palette-red-600: #dc2626;
+$palette-red-700: #b91c1c;
+$palette-red-800: #991b1b;
+
+// Semantic colors
+$color-text-primary: $palette-slate-800;
+$color-text-secondary: $palette-slate-600;
+$color-text-muted: $palette-slate-500;
+$color-text-placeholder: $palette-slate-400;
+$color-text-on-accent: $palette-white;
+$color-surface-page: $palette-slate-50;
+$color-surface-raised: $palette-white;
+$color-surface-subtle: $palette-slate-100;
+$color-border-default: $palette-slate-200;
+$color-border-control: $palette-slate-300;
+$color-border-strong: $palette-slate-400;
+$color-primary: $palette-blue-600;
+$color-primary-hover: $palette-blue-700;
+$color-primary-active: $palette-blue-800;
+$color-primary-subtle: $palette-blue-50;
+$color-danger: $palette-red-600;
+$color-danger-hover: $palette-red-700;
+$color-danger-active: $palette-red-800;
+$color-danger-subtle: $palette-red-50;
+$color-danger-subtle-hover: $palette-red-100;
+$color-danger-subtle-active: $palette-red-200;
+$color-disabled-surface: $palette-slate-100;
+$color-disabled-border: $palette-slate-300;
+$color-disabled-text: $palette-slate-400;
+$color-backdrop: rgba($palette-slate-900, 0.55);
+
+// Typography
+$font-family-base: Inter, Arial, sans-serif;
+$font-size-checkbox: 0.875rem;
+$font-size-heading-sm: 1.125rem;
+$font-size-icon: 1.25rem;
+$font-size-page-title-min: 1.75rem;
+$font-size-page-title-fluid: 4vw;
+$font-size-page-title-max: 2.5rem;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+$font-weight-extrabold: 800;
+$line-height-control: 1.4;
+$line-height-tight: 1;
+
+// Spacing scale
+$space-1: 4px;
+$space-1-5: 6px;
+$space-2: 8px;
+$space-2-5: 10px;
+$space-3: 12px;
+$space-3-5: 14px;
+$space-4: 16px;
+$space-4-5: 18px;
+$space-5: 20px;
+$space-6: 24px;
+$space-7: 28px;
+$space-8: 32px;
+$space-10: 40px;
+$space-12: 48px;
+$space-14: 56px;
+
+// Component sizing and layout
+$control-height-sm: 32px;
+$control-height-md: 40px;
+$control-height-lg: 44px;
+$icon-button-size: 36px;
+$checkbox-size: 20px;
+$page-max-width: 1000px;
+$editor-max-width: 760px;
+$modal-max-width: 480px;
+$card-min-width: 280px;
+$page-gutter: $space-4;
+$page-gutter-mobile: $space-3;
+$page-inline-offset: $page-gutter * 2;
+$page-inline-offset-mobile: $page-gutter-mobile * 2;
+
+// Borders and radii
+$border-width: 1px;
+$radius-sm: 4px;
+$radius-md: 6px;
+$radius-lg: 8px;
+$radius-xl: 12px;
+
+// Elevation and focus
+$shadow-control: 0 1px 2px rgba($palette-slate-900, 0.04);
+$shadow-modal: 0 24px 64px rgba($palette-slate-900, 0.24);
+$focus-ring-width: 3px;
+$focus-ring-offset: 2px;
+$focus-ring: rgba($color-primary, 0.35);
+$focus-ring-control: rgba($color-primary, 0.18);
+$focus-ring-danger: rgba($color-danger, 0.16);
+
+// Motion
+$duration-fast: 0.15s;
+$duration-press: 0.1s;
+$easing-standard: ease;
+$pressed-offset: 1px;
+
+// State opacity
+$opacity-disabled: 0.5;
+$opacity-completed: 0.7;
+
+// Layers
+$z-index-modal: 10;
+
+// Breakpoints
 $breakpoint-mobile-max: 540px;
 $breakpoint-tablet-max: 768px;
-
-$page-gutter: 16px;
-$page-gutter-mobile: 12px;
-

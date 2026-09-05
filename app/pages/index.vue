@@ -50,53 +50,57 @@ const remove = () => {
 @use '~/assets/styles/tokens' as *;
 
 .page {
-  width: min(100% - 32px, 1000px);
+  width: min(100% - $page-inline-offset, $page-max-width);
   margin: 0 auto;
-  padding: 48px 0;
+  padding: $space-12 0;
 }
 .page > header {
   display: flex;
   justify-content: space-between;
-  gap: 24px;
+  gap: $space-6;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: $space-8;
 }
 .page header p {
-  margin: 0 0 6px;
-  color: #2563eb;
-  font-weight: 700;
+  margin: 0 0 $space-1-5;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
 }
 .page h1 {
   margin: 0;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-size: clamp(
+    $font-size-page-title-min,
+    $font-size-page-title-fluid,
+    $font-size-page-title-max
+  );
 }
 .page > header a {
-  padding: 11px 16px;
-  border-radius: 8px;
-  color: #fff;
-  background: #2563eb;
+  padding: $space-2-5 $space-4;
+  border-radius: $radius-lg;
+  color: $color-text-on-accent;
+  background: $color-primary;
   text-decoration: none;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax($card-min-width, 1fr));
+  gap: $space-4;
 }
 .empty {
-  padding: 56px 24px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
+  padding: $space-14 $space-6;
+  border: $border-width dashed $color-border-control;
+  border-radius: $radius-xl;
   text-align: center;
-  color: #64748b;
+  color: $color-text-muted;
 }
 .empty h2 {
-  color: #334155;
+  color: $color-text-primary;
 }
 @media (max-width: $breakpoint-mobile-max) {
   .page {
-    width: min(100% - 24px, 1000px);
-    padding-top: 28px;
+    width: min(100% - $page-inline-offset-mobile, $page-max-width);
+    padding-top: $space-7;
   }
   .page > header {
     align-items: start;

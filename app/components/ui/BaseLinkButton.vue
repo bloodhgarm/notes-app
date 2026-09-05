@@ -17,45 +17,47 @@ withDefaults(
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .link-button {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  min-height: $control-height-sm;
+  padding: $space-1 $space-2;
+  border-radius: $radius-md;
   font: inherit;
-  font-weight: 600;
-  line-height: 1.4;
+  font-weight: $font-weight-semibold;
+  line-height: $line-height-control;
   text-decoration: none;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease;
+    color $duration-fast $easing-standard,
+    background-color $duration-fast $easing-standard;
 }
 
 .link-button:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.35);
-  outline-offset: 2px;
+  outline: $focus-ring-width solid $focus-ring;
+  outline-offset: $focus-ring-offset;
 }
 
 .link-button:active {
-  transform: translateY(1px);
+  transform: translateY($pressed-offset);
 }
 
 .link-button--primary {
-  color: #2563eb;
+  color: $color-primary;
 }
 
 .link-button--primary:hover {
-  color: #1d4ed8;
-  background: #eff6ff;
+  color: $color-primary-hover;
+  background: $color-primary-subtle;
 }
 
 .link-button--neutral {
-  color: #475569;
+  color: $color-text-secondary;
 }
 
 .link-button--neutral:hover {
-  color: #1e293b;
-  background: #f1f5f9;
+  color: $color-text-primary;
+  background: $color-surface-subtle;
 }
 </style>

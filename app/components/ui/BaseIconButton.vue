@@ -26,55 +26,57 @@ withDefaults(
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .icon-button {
   display: inline-grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: $icon-button-size;
+  height: $icon-button-size;
+  flex: 0 0 $icon-button-size;
   place-items: center;
   border: 0;
-  border-radius: 6px;
-  color: #475569;
+  border-radius: $radius-md;
+  color: $color-text-secondary;
   background: transparent;
   font: inherit;
-  font-size: 1.25rem;
-  line-height: 1;
+  font-size: $font-size-icon;
+  line-height: $line-height-tight;
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.1s ease;
+    color $duration-fast $easing-standard,
+    background-color $duration-fast $easing-standard,
+    transform $duration-press $easing-standard;
 }
 
 .icon-button:hover:not(:disabled) {
-  background: #f1f5f9;
+  background: $color-surface-subtle;
 }
 
 .icon-button:active:not(:disabled) {
-  transform: translateY(1px);
-  background: #e2e8f0;
+  transform: translateY($pressed-offset);
+  background: $color-border-default;
 }
 
 .icon-button:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.35);
-  outline-offset: 2px;
+  outline: $focus-ring-width solid $focus-ring;
+  outline-offset: $focus-ring-offset;
 }
 
 .icon-button:disabled {
-  opacity: 0.5;
+  opacity: $opacity-disabled;
   cursor: not-allowed;
 }
 
 .icon-button--danger {
-  color: #b91c1c;
-  background: #fef2f2;
+  color: $color-danger-hover;
+  background: $color-danger-subtle;
 }
 
 .icon-button--danger:hover:not(:disabled) {
-  background: #fee2e2;
+  background: $color-danger-subtle-hover;
 }
 
 .icon-button--danger:active:not(:disabled) {
-  background: #fecaca;
+  background: $color-danger-subtle-active;
 }
 </style>

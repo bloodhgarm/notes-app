@@ -113,42 +113,44 @@ onBeforeUnmount(() => {
   ></Teleport>
 </template>
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .backdrop {
   position: fixed;
-  z-index: 10;
+  z-index: $z-index-modal;
   inset: 0;
   display: grid;
   place-items: center;
-  padding: 20px;
-  background: rgba(15, 23, 42, 0.55);
+  padding: $space-5;
+  background: $color-backdrop;
 }
 .modal {
-  width: min(100%, 480px);
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.24);
+  width: min(100%, $modal-max-width);
+  border-radius: $radius-xl;
+  background: $color-surface-raised;
+  box-shadow: $shadow-modal;
 }
 .modal header,
 .modal footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
+  gap: $space-3;
+  padding: $space-4-5 $space-5;
 }
 .modal header {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: $border-width solid $color-border-default;
 }
 .modal h2 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: $font-size-heading-sm;
 }
 .modal > div {
-  padding: 20px;
-  color: #475569;
+  padding: $space-5;
+  color: $color-text-secondary;
 }
 .modal footer {
   justify-content: end;
-  border-top: 1px solid #e5e7eb;
+  border-top: $border-width solid $color-border-default;
 }
 </style>

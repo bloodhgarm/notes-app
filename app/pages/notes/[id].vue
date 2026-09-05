@@ -259,55 +259,39 @@ onBeforeUnmount(() => {
 @use '~/assets/styles/tokens' as *;
 
 .editor-page {
-  width: min(100% - 32px, 760px);
+  width: min(100% - $page-inline-offset, $editor-max-width);
   margin: 0 auto;
-  padding: 40px 0;
+  padding: $space-10 0;
 }
 .editor-page h1 {
-  margin: 16px 0 28px;
+  margin: $space-4 0 $space-7;
 }
 .editor-page form {
   display: grid;
-  gap: 24px;
+  gap: $space-6;
 }
 .editor-page label {
   display: grid;
-  gap: 8px;
-  font-weight: 700;
-}
-.editor-page input[type='text'],
-.editor-page label > input {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  font: inherit;
-}
-.editor-page input:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.3);
-  border-color: #2563eb;
+  gap: $space-2;
+  font-weight: $font-weight-bold;
 }
 .toolbar,
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: $space-2-5;
 }
 .actions {
   justify-content: flex-end;
 }
 .error {
   margin: 0;
-  color: #64748b;
-}
-.error {
-  color: #b91c1c;
+  color: $color-danger-hover;
 }
 @media (max-width: $breakpoint-mobile-max) {
   .editor-page {
-    width: min(100% - 24px, 760px);
-    padding-top: 24px;
+    width: min(100% - $page-inline-offset-mobile, $editor-max-width);
+    padding-top: $space-6;
   }
   .actions > * {
     flex: 1;

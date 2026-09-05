@@ -20,61 +20,63 @@ withDefaults(
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/tokens' as *;
+
 .button {
-  min-height: 40px;
-  padding: 0 16px;
-  border: 1px solid transparent;
-  border-radius: 8px;
+  min-height: $control-height-md;
+  padding: 0 $space-4;
+  border: $border-width solid transparent;
+  border-radius: $radius-lg;
   font: inherit;
-  font-weight: 600;
+  font-weight: $font-weight-semibold;
   cursor: pointer;
   transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.1s ease;
+    color $duration-fast $easing-standard,
+    border-color $duration-fast $easing-standard,
+    background-color $duration-fast $easing-standard,
+    transform $duration-press $easing-standard;
 }
 .button:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.35);
-  outline-offset: 2px;
+  outline: $focus-ring-width solid $focus-ring;
+  outline-offset: $focus-ring-offset;
 }
 .button:disabled {
-  opacity: 0.5;
+  opacity: $opacity-disabled;
   cursor: not-allowed;
 }
 .button:not(:disabled):active {
-  transform: translateY(1px);
+  transform: translateY($pressed-offset);
 }
 .button--primary {
-  color: #fff;
-  background: #2563eb;
+  color: $color-text-on-accent;
+  background: $color-primary;
 }
 .button--primary:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: $color-primary-hover;
 }
 .button--primary:active:not(:disabled) {
-  background: #1e40af;
+  background: $color-primary-active;
 }
 .button--secondary {
-  color: #1f2937;
-  border-color: #d1d5db;
-  background: #fff;
+  color: $color-text-primary;
+  border-color: $color-border-control;
+  background: $color-surface-raised;
 }
 .button--secondary:hover:not(:disabled) {
-  border-color: #94a3b8;
-  background: #f8fafc;
+  border-color: $color-border-strong;
+  background: $color-surface-page;
 }
 .button--secondary:active:not(:disabled) {
-  background: #f1f5f9;
+  background: $color-surface-subtle;
 }
 .button--danger {
-  color: #fff;
-  background: #dc2626;
+  color: $color-text-on-accent;
+  background: $color-danger;
 }
 .button--danger:hover:not(:disabled) {
-  background: #b91c1c;
+  background: $color-danger-hover;
 }
 .button--danger:active:not(:disabled) {
-  background: #991b1b;
+  background: $color-danger-active;
 }
 </style>
