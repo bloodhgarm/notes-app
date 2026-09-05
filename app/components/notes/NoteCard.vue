@@ -8,7 +8,7 @@ defineEmits<{ delete: [id: string] }>()
   <article class="card">
     <header>
       <h2>{{ note.title || 'Без названия' }}</h2>
-      <NuxtLink :to="`/notes/${note.id}`">Редактировать</NuxtLink>
+      <BaseLinkButton :to="`/notes/${note.id}`">Редактировать</BaseLinkButton>
     </header>
     <ul v-if="note.todos.length">
       <li v-for="todo in note.todos.slice(0, 3)" :key="todo.id">
@@ -41,9 +41,6 @@ defineEmits<{ delete: [id: string] }>()
   margin: 0;
   overflow-wrap: anywhere;
   font-size: 1.125rem;
-}
-.card a {
-  color: #2563eb;
 }
 .card ul {
   display: grid;

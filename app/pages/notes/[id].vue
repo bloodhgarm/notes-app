@@ -97,11 +97,11 @@ onBeforeUnmount(() => {
   <main v-if="initialized" class="editor-page">
     <section v-if="missing" class="empty">
       <h1>Заметка не найдена</h1>
-      <NuxtLink to="/">Вернуться к списку</NuxtLink>
+      <BaseLinkButton to="/">Вернуться к списку</BaseLinkButton>
     </section>
     <template v-else-if="editor.draft"
       ><header>
-        <NuxtLink to="/">← Все заметки</NuxtLink>
+        <BaseLinkButton to="/" tone="neutral">← Все заметки</BaseLinkButton>
         <h1>{{ isNew ? 'Новая заметка' : 'Редактирование заметки' }}</h1>
       </header>
       <form @submit.prevent="save">
@@ -188,10 +188,6 @@ onBeforeUnmount(() => {
   width: min(100% - 32px, 760px);
   margin: 0 auto;
   padding: 40px 0;
-}
-.editor-page header > a,
-.empty a {
-  color: #2563eb;
 }
 .editor-page h1 {
   margin: 16px 0 28px;
