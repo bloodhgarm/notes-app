@@ -54,6 +54,14 @@ test('draft survives an immediate reload', async ({ page }) => {
   await expect(page.getByLabel('Название заметки')).toHaveValue('Черновик перед перезагрузкой')
 })
 
+test('empty new note does not create a draft when leaving the editor', async ({ page }) => {
+  await page.goto('/notes/new')
+  await page.getByRole('link', { name: 'Все заметки' }).click()
+
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  expect(await page.evaluate(() => window.localStorage.getItem('notes-app:draft:new'))).toBeNull()
+})
+
 test('editor handles deletion from another tab', async ({ browser }) => {
   const context = await browser.newContext()
   await context.addInitScript(() => {

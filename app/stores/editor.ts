@@ -27,6 +27,7 @@ let textHistoryTimeout: ReturnType<typeof setTimeout> | undefined
 
 export const useEditorStore = defineStore('editor', () => {
   const draft = ref<Note | null>(null)
+  const hasChanges = ref(false)
   const sourceUpdatedAt = ref<string | null>(null)
   const sessionKey = ref<string | null>(null)
   const history = ref<NoteHistoryState>(createHistoryState())
@@ -41,7 +42,16 @@ export const useEditorStore = defineStore('editor', () => {
       draftTimeout = undefined
     }
 
-    if (!draft.value || !sessionKey.value) {
+    if (!draft.value || !sessionKey.value || !hasChanges.value) {
+      return
+    }
+
+    if (
+      sessionKey.value === 'new' &&
+      !draft.value.title.trim() &&
+      draft.value.todos.length === 0
+    ) {
+      removeDraft(sessionKey.value)
       return
     }
 
@@ -82,6 +92,7 @@ export const useEditorStore = defineStore('editor', () => {
     }
     sourceUpdatedAt.value = null
     sessionKey.value = 'new'
+    hasChanges.value = false
     resetHistory()
   }
 
@@ -89,10 +100,25 @@ export const useEditorStore = defineStore('editor', () => {
     draft.value = cloneNote(note)
     sourceUpdatedAt.value = note.updatedAt
     sessionKey.value = note.id
+    hasChanges.value = false
     resetHistory()
   }
 
-  const getStoredDraft = (key: string): Note | null => readDraft(key)?.note ?? null
+  const getStoredDraft = (key: string): Note | null => {
+    const storedDraft = readDraft(key)
+
+    if (
+      key === 'new' &&
+      storedDraft &&
+      !storedDraft.note.title.trim() &&
+      storedDraft.note.todos.length === 0
+    ) {
+      removeDraft(key)
+      return null
+    }
+
+    return storedDraft?.note ?? null
+  }
 
   const restoreStoredDraft = (key: string): boolean => {
     const persistedDraft = readDraft(key)
@@ -104,6 +130,7 @@ export const useEditorStore = defineStore('editor', () => {
     draft.value = cloneNote(persistedDraft.note)
     sourceUpdatedAt.value = persistedDraft.sourceUpdatedAt
     sessionKey.value = key
+    hasChanges.value = true
     resetHistory()
     return true
   }
@@ -140,13 +167,16 @@ export const useEditorStore = defineStore('editor', () => {
     flushTextChange()
     draft.value = applyOperation(draft.value, operation)
     history.value = recordOperation(history.value, operation)
+    hasChanges.value = true
     scheduleDraftPersist()
   }
 
   const updateTitle = (next: string): void => {
-    if (!draft.value) {
+    if (!draft.value || draft.value.title === next) {
       return
     }
+
+    hasChanges.value = true
 
     if (pendingTextChange.value?.field !== 'title') {
       flushTextChange()
@@ -170,9 +200,11 @@ export const useEditorStore = defineStore('editor', () => {
 
     const todo = draft.value.todos.find((item) => item.id === todoId)
 
-    if (!todo) {
+    if (!todo || todo.text === next) {
       return
     }
+
+    hasChanges.value = true
 
     const field = `todo:${todoId}` as const
 
@@ -265,6 +297,7 @@ export const useEditorStore = defineStore('editor', () => {
     draft.value = null
     sourceUpdatedAt.value = null
     sessionKey.value = null
+    hasChanges.value = false
     resetHistory()
   }
 

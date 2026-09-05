@@ -94,6 +94,32 @@ describe('editor store', () => {
     expect(restoredEditor.canUndo).toBe(false)
   })
 
+  it('does not persist an untouched empty new note', () => {
+    const editor = useEditorStore()
+    editor.startNew()
+
+    editor.persistDraftNow()
+
+    expect(editor.getStoredDraft('new')).toBeNull()
+    expect(storage.getItem('notes-app:draft:new')).toBeNull()
+  })
+
+  it('persists a new draft only when it has a title or a todo', () => {
+    const editor = useEditorStore()
+    editor.startNew()
+    editor.updateTitle('Draft title')
+    editor.persistDraftNow()
+    expect(editor.getStoredDraft('new')?.title).toBe('Draft title')
+
+    editor.updateTitle('')
+    editor.persistDraftNow()
+    expect(editor.getStoredDraft('new')).toBeNull()
+
+    editor.addTodo()
+    editor.persistDraftNow()
+    expect(editor.getStoredDraft('new')?.todos).toHaveLength(1)
+  })
+
   it('clears history and stored draft after finishing an edit', () => {
     const editor = useEditorStore()
     editor.startEditing(createNote())
