@@ -10,17 +10,21 @@
     "postinstall": "nuxt prepare",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --grep-invert @a11y",
+    "test:a11y": "playwright test --grep @a11y --project=chromium",
+    "test:e2e:install": "playwright install chromium firefox webkit",
+    "docker:prod": "docker compose up --build",
+    "docker:dev": "docker compose --profile development up --build notes-app-dev",
     "typecheck": "nuxt typecheck",
+    "validate:html": "html-validate app --ext vue",
     "lint": "eslint .",
-    "format": "prettier --write \"app/**/*.vue\"",
-    "format:check": "prettier --check \"app/**/*.vue\""
+    "format": "prettier --write . --ignore-unknown",
+    "format:check": "prettier --check . --ignore-unknown",
+    "check": "bun run format:check && bun run validate:html && bun run lint && bun run typecheck && bun run test && bun run test:a11y && bun run test:e2e && bun run build",
+    "check:fix": "bun run format && bun run check"
   },
   "dependencies": {
-    "@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/eslint": "1.17.0",
-    "@nuxt/fonts": "0.14.0",
-    "@nuxt/hints": "1.1.4",
     "@pinia/nuxt": "^1.0.2",
     "eslint": "^9.0.0 || ^10.0.0",
     "nuxt": "^4.5.2",
@@ -28,7 +32,10 @@
     "vue-router": "^5.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
+    "html-validate": "^11.14.0",
+    "html-validate-vue": "^9.3.1",
     "prettier": "^3.9.6",
     "sass": "^1.103.1",
     "vitest": "^5.0.0",

@@ -1,0 +1,13 @@
+{
+  "plugins": ["html-validate-vue"],
+  "extends": ["html-validate:recommended", "html-validate-vue:recommended"],
+  "elements": ["html5"],
+  "transform": {
+    "^.*\\.vue$": "html-validate-vue:sfc"
+  },
+  "rules": {
+    "element-case": "off",
+    "element-name": "off",
+    "wcag/h32": "off"
+  }
+}

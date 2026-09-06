@@ -1,7 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NUXT_E2E !== 'true' },
   ssr: false,
   app: {
     head: {
@@ -16,13 +16,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/fonts',
-    '@nuxt/a11y',
-    '@nuxt/hints',
-    '@pinia/nuxt',
-  ],
+  modules: ['@nuxt/eslint', '@pinia/nuxt'],
   components: [
     {
       path: '~/components',
