@@ -88,7 +88,6 @@ $checkbox-size: 20px;
 $page-max-width: 1000px;
 $editor-max-width: 760px;
 $modal-max-width: 480px;
-$card-min-width: 280px;
 $page-gutter: $space-4;
 $page-gutter-mobile: $space-3;
 $page-inline-offset: $page-gutter * 2;
@@ -121,8 +120,8 @@ $opacity-disabled: 0.5;
 $opacity-completed: 0.7;
 
 // Layers
+$z-index-sticky: 1;
 $z-index-modal: 10;
 
 // Breakpoints
 $breakpoint-mobile-max: 540px;
-$breakpoint-tablet-max: 768px;

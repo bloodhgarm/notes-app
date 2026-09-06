@@ -35,7 +35,7 @@ defineEmits<{
       :label="`Удалить задачу ${todo.text || 'без текста'}`"
       @click="$emit('remove')"
     >
-      <span aria-hidden="true">×</span>
+      <span class="todo-item__remove-icon" aria-hidden="true">×</span>
     </BaseIconButton>
   </li>
 </template>

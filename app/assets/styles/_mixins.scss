@@ -1,0 +1,10 @@
+@use 'tokens' as *;
+
+@mixin page-container($max-width) {
+  width: min(100% - $page-inline-offset, $max-width);
+  margin-inline: auto;
+
+  @media (max-width: $breakpoint-mobile-max) {
+    width: min(100% - $page-inline-offset-mobile, $max-width);
+  }
+}
