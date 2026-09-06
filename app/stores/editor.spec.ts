@@ -1,35 +1,13 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Note } from '~/types/note'
+import { createTestNote } from '~/test-utils/note'
+import { createMemoryStorage } from '~/test-utils/storage'
 
 import { useEditorStore } from './editor'
 
-const createStorage = (): Storage => {
-  const values = new Map<string, string>()
-
-  return {
-    get length() {
-      return values.size
-    },
-    clear: () => values.clear(),
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    removeItem: (key) => values.delete(key),
-    setItem: (key, value) => values.set(key, value),
-  }
-}
-
-const createNote = (): Note => ({
-  id: 'note-1',
-  title: 'Original',
-  todos: [{ id: 'todo-1', text: 'Milk', completed: false }],
-  createdAt: '2026-09-04T10:00:00.000Z',
-  updatedAt: '2026-09-04T10:00:00.000Z',
-})
-
 describe('editor store', () => {
-  const storage = createStorage()
+  const storage = createMemoryStorage()
 
   beforeEach(() => {
     vi.useFakeTimers()
@@ -46,7 +24,7 @@ describe('editor store', () => {
 
   it('groups continuous typing in one undo entry', () => {
     const editor = useEditorStore()
-    editor.startEditing(createNote())
+    editor.startEditing(createTestNote())
 
     editor.updateTitle('N')
     editor.updateTitle('Ne')
@@ -61,9 +39,40 @@ describe('editor store', () => {
     expect(editor.draft?.title).toBe('New title')
   })
 
+  it('makes pending text immediately undoable before the debounce delay', () => {
+    const editor = useEditorStore()
+    editor.startEditing(createTestNote())
+
+    editor.updateTitle('Immediate change')
+
+    expect(editor.canUndo).toBe(true)
+    editor.undo()
+    expect(editor.draft?.title).toBe('Original')
+    expect(editor.canRedo).toBe(true)
+  })
+
+  it('disables redo for pending text and preserves it if the text returns to its original value', () => {
+    const editor = useEditorStore()
+    editor.startEditing(createTestNote())
+    editor.updateTitle('First change')
+    editor.undo()
+    expect(editor.canRedo).toBe(true)
+
+    editor.updateTitle('Branched change')
+    expect(editor.canRedo).toBe(false)
+
+    editor.updateTitle('Original')
+    expect(editor.canRedo).toBe(true)
+    editor.flushTextChange()
+    expect(editor.canRedo).toBe(true)
+
+    editor.redo()
+    expect(editor.draft?.title).toBe('First change')
+  })
+
   it('records add, toggle and remove as reversible operations', () => {
     const editor = useEditorStore()
-    editor.startEditing(createNote())
+    editor.startEditing(createTestNote())
 
     editor.toggleTodo('todo-1')
     expect(editor.draft?.todos[0]?.completed).toBe(true)
@@ -81,7 +90,7 @@ describe('editor store', () => {
 
   it('persists and restores a draft after the debounce delay', () => {
     const editor = useEditorStore()
-    editor.startEditing(createNote())
+    editor.startEditing(createTestNote())
     editor.updateTitle('Stored draft')
 
     vi.advanceTimersByTime(350)
@@ -104,7 +113,7 @@ describe('editor store', () => {
     expect(storage.getItem('notes-app:draft:new')).toBeNull()
   })
 
-  it('persists a new draft only when it has a title or a todo', () => {
+  it('persists a new draft only when it has a title or a todo with text', () => {
     const editor = useEditorStore()
     editor.startNew()
     editor.updateTitle('Draft title')
@@ -117,12 +126,47 @@ describe('editor store', () => {
 
     editor.addTodo()
     editor.persistDraftNow()
+    expect(editor.getStoredDraft('new')).toBeNull()
+
+    const todoId = editor.draft?.todos[0]?.id
+    expect(todoId).toBeTruthy()
+    editor.updateTodoText(todoId!, 'Draft task')
+    editor.persistDraftNow()
     expect(editor.getStoredDraft('new')?.todos).toHaveLength(1)
+
+    editor.updateTodoText(todoId!, '   ')
+    editor.persistDraftNow()
+    expect(editor.getStoredDraft('new')).toBeNull()
+  })
+
+  it('removes a draft when the editor returns to its original content', () => {
+    const editor = useEditorStore()
+    editor.startEditing(createTestNote())
+    editor.updateTitle('Changed title')
+    editor.persistDraftNow()
+    expect(editor.getStoredDraft('note-1')?.title).toBe('Changed title')
+
+    editor.updateTitle('Original')
+    editor.persistDraftNow()
+
+    expect(editor.getStoredDraft('note-1')).toBeNull()
+  })
+
+  it('removes a draft after undo restores the original content', () => {
+    const editor = useEditorStore()
+    editor.startEditing(createTestNote())
+    editor.updateTitle('Changed title')
+    editor.persistDraftNow()
+
+    editor.undo()
+    editor.persistDraftNow()
+
+    expect(editor.getStoredDraft('note-1')).toBeNull()
   })
 
   it('clears history and stored draft after finishing an edit', () => {
     const editor = useEditorStore()
-    editor.startEditing(createNote())
+    editor.startEditing(createTestNote())
     editor.toggleTodo('todo-1')
     editor.persistDraftNow()
 

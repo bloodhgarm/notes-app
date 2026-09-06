@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { Note } from '~/types/note'
+import { createTestNote } from '~/test-utils/note'
 
 import {
   HISTORY_LIMIT,
@@ -11,13 +11,7 @@ import {
   undoOperation,
 } from './note-history'
 
-const note: Note = {
-  id: 'note-1',
-  title: 'Original',
-  todos: [{ id: 'todo-1', text: 'Milk', completed: false }],
-  createdAt: '2026-09-04T10:00:00.000Z',
-  updatedAt: '2026-09-04T10:00:00.000Z',
-}
+const note = createTestNote()
 
 describe('note history', () => {
   it('undoes and redoes a text change', () => {

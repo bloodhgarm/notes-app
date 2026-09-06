@@ -2,26 +2,12 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { NOTES_STORAGE_KEY } from '~/services/notes-storage'
+import { createMemoryStorage } from '~/test-utils/storage'
 
 import { useNotesStore } from './notes'
 
-const createStorage = (): Storage => {
-  const values = new Map<string, string>()
-
-  return {
-    get length() {
-      return values.size
-    },
-    clear: () => values.clear(),
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    removeItem: (key) => values.delete(key),
-    setItem: (key, value) => values.set(key, value),
-  }
-}
-
 describe('notes store', () => {
-  const storage = createStorage()
+  const storage = createMemoryStorage()
 
   beforeEach(() => {
     vi.useFakeTimers()
@@ -85,8 +71,8 @@ describe('notes store', () => {
     store.hydrate()
     store.hydrate()
 
-    expect(store.isHydrated).toBe(true)
     expect(store.notes).toHaveLength(1)
+    expect(store.notes[0]?.title).toBe('Stored note')
   })
 
   it('synchronizes deletion from another tab on a storage event', () => {
@@ -94,10 +80,7 @@ describe('notes store', () => {
     const note = store.createNote('Shared note')
     store.persistNow()
 
-    storage.setItem(
-      NOTES_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 1, notes: [] }),
-    )
+    storage.setItem(NOTES_STORAGE_KEY, JSON.stringify({ schemaVersion: 1, notes: [] }))
     store.handleStorageEvent({ key: NOTES_STORAGE_KEY } as StorageEvent)
 
     expect(store.getNoteById(note.id)).toBeUndefined()

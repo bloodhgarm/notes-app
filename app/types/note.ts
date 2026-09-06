@@ -20,5 +20,4 @@ export interface PersistedNotesState {
 export interface PersistedDraft {
   schemaVersion: 1
   note: Note
-  sourceUpdatedAt: string | null
 }

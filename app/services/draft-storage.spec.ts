@@ -1,34 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { Note, PersistedDraft } from '~/types/note'
+import { createTestNote } from '~/test-utils/note'
+import { createMemoryStorage } from '~/test-utils/storage'
+import type { PersistedDraft } from '~/types/note'
 
 import { readDraft, removeDraft, writeDraft } from './draft-storage'
 
-const createStorage = (): Storage => {
-  const values = new Map<string, string>()
-
-  return {
-    get length() {
-      return values.size
-    },
-    clear: () => values.clear(),
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    removeItem: (key) => values.delete(key),
-    setItem: (key, value) => values.set(key, value),
-  }
-}
-
-const note: Note = {
-  id: 'note-1',
+const note = createTestNote({
   title: 'Draft title',
   todos: [],
-  createdAt: '2026-09-04T10:00:00.000Z',
-  updatedAt: '2026-09-04T10:00:00.000Z',
-}
+})
 
 describe('draft storage', () => {
-  const storage = createStorage()
+  const storage = createMemoryStorage()
 
   beforeEach(() => {
     storage.clear()
@@ -41,7 +25,6 @@ describe('draft storage', () => {
     const draft: PersistedDraft = {
       schemaVersion: 1,
       note,
-      sourceUpdatedAt: note.updatedAt,
     }
 
     writeDraft(note.id, draft)
@@ -55,10 +38,20 @@ describe('draft storage', () => {
     storage.setItem('notes-app:draft:note-1', '{broken-json')
     expect(readDraft(note.id)).toBeNull()
 
-    storage.setItem(
-      'notes-app:draft:note-1',
-      JSON.stringify({ schemaVersion: 99, note, sourceUpdatedAt: note.updatedAt }),
-    )
+    storage.setItem('notes-app:draft:note-1', JSON.stringify({ schemaVersion: 99, note }))
     expect(readDraft(note.id)).toBeNull()
+  })
+
+  it('never stores an empty new-note draft', () => {
+    const key = 'notes-app:draft:new'
+    storage.setItem(key, 'stale-value')
+
+    writeDraft('new', {
+      schemaVersion: 1,
+      note: { ...note, title: '', todos: [] },
+    })
+
+    expect(storage.getItem(key)).toBeNull()
+    expect(readDraft('new')).toBeNull()
   })
 })
