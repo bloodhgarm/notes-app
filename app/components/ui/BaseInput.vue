@@ -10,6 +10,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
   <input
     v-bind="$attrs"
     class="base-input"
+    type="text"
     :class="{ 'base-input--invalid': invalid }"
     :value="modelValue"
     :aria-invalid="invalid || undefined"

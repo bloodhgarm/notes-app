@@ -18,10 +18,10 @@ defineEmits<{
 <template>
   <section class="todo-list" aria-labelledby="todo-list-title">
     <div class="todo-list__heading">
-      <h2 id="todo-list-title">Задачи</h2>
+      <h2 id="todo-list-title" class="todo-list__title">Задачи</h2>
       <BaseButton variant="secondary" @click="$emit('add')">Добавить задачу</BaseButton>
     </div>
-    <ul v-if="todos.length">
+    <ul v-if="todos.length" class="todo-list__items">
       <TodoItem
         v-for="todo in todos"
         :key="todo.id"
@@ -54,12 +54,12 @@ defineEmits<{
   gap: $space-4;
 }
 
-.todo-list h2 {
+.todo-list__title {
   margin: 0;
   font-size: $font-size-heading-sm;
 }
 
-.todo-list ul {
+.todo-list__items {
   display: grid;
   gap: $space-1-5;
   margin: $space-3-5 (-$space-1-5) 0;

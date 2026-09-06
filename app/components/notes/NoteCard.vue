@@ -6,22 +6,24 @@ defineEmits<{ delete: [id: string] }>()
 
 <template>
   <article class="card">
-    <header>
-      <h2>{{ note.title || 'Без названия' }}</h2>
-      <BaseLinkButton :to="`/notes/${note.id}`">Редактировать</BaseLinkButton>
+    <header class="card__header">
+      <h2 class="card__title">{{ note.title || 'Без названия' }}</h2>
     </header>
-    <ul v-if="note.todos.length">
-      <li v-for="todo in note.todos.slice(0, 3)" :key="todo.id">
-        <BaseCheckbox :model-value="todo.completed" disabled aria-label="Статус задачи" /><span
-          :class="{ done: todo.completed }"
-          >{{ todo.text || 'Без текста' }}</span
-        >
+    <ul v-if="note.todos.length" class="card__todos">
+      <li v-for="todo in note.todos.slice(0, 3)" :key="todo.id" class="card__todo">
+        <BaseCheckbox :model-value="todo.completed" disabled aria-label="Статус задачи" />
+        <span class="card__todo-text" :class="{ 'card__todo-text--completed': todo.completed }">
+          {{ todo.text || 'Без текста' }}
+        </span>
       </li>
     </ul>
-    <p v-else>Задач пока нет</p>
-    <BaseButton class="card__delete" variant="danger" @click="$emit('delete', note.id)">
-      Удалить
-    </BaseButton>
+    <p v-else class="card__empty">Задач пока нет</p>
+    <div class="card__actions">
+      <BaseLinkButton class="card__edit" :to="`/notes/${note.id}`">Редактировать</BaseLinkButton>
+      <BaseButton class="card__delete" variant="danger" @click="$emit('delete', note.id)">
+        Удалить
+      </BaseButton>
+    </div>
   </article>
 </template>
 
@@ -36,38 +38,51 @@ defineEmits<{ delete: [id: string] }>()
   border-radius: $radius-xl;
   background: $color-surface-raised;
 }
-.card header {
+.card__header {
   display: flex;
   justify-content: space-between;
   gap: $space-3;
 }
-.card h2 {
+.card__title {
+  min-width: 0;
   margin: 0;
+  display: -webkit-box;
   overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   font-size: $font-size-heading-sm;
 }
-.card ul {
+.card__todos {
   display: grid;
   gap: $space-2-5;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.card li {
+.card__todo {
   display: flex;
+  min-width: 0;
   gap: $space-2-5;
   align-items: center;
   color: $color-text-secondary;
 }
-.done {
+.card__todo-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.card__todo-text--completed {
   text-decoration: line-through;
   opacity: $opacity-completed;
 }
-.card p {
+.card__empty {
   margin: 0;
   color: $color-text-muted;
 }
-.card__delete {
-  justify-self: end;
+.card__actions {
+  display: flex;
+  gap: $space-2;
+  align-items: center;
+  justify-content: flex-end;
 }
 </style>
