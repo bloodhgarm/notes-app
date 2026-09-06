@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import { NOTES_STORAGE_KEY } from '~/services/notes-storage'
 import type { Note } from '~/types/note'
+import { getHistoryShortcut } from '~/utils/history-shortcut'
+import { normalizeNoteContent } from '~/utils/note'
+
+type ActiveDialog = 'restore' | 'cancel' | 'delete' | 'external-delete' | null
 
 const route = useRoute()
 const router = useRouter()
@@ -10,13 +14,12 @@ const notesStore = useNotesStore()
 const editor = useEditorStore()
 const id = computed(() => String(route.params.id))
 const isNew = computed(() => id.value === 'new')
+const sessionKey = computed(() => (isNew.value ? 'new' : id.value))
 const initialized = ref(false)
 const missing = ref(false)
-const restorePrompt = ref(false)
-const cancelPrompt = ref(false)
-const deletePrompt = ref(false)
-const externalDeletionPrompt = ref(false)
+const activeDialog = ref<ActiveDialog>(null)
 const validationMessage = ref('')
+const hasOpenModal = computed(() => activeDialog.value !== null)
 
 const initialize = () => {
   notesStore.hydrate()
@@ -30,16 +33,16 @@ const initialize = () => {
     }
     editor.startEditing(note)
   }
-  if (editor.getStoredDraft(isNew.value ? 'new' : id.value)) restorePrompt.value = true
+  if (editor.getStoredDraft(sessionKey.value)) activeDialog.value = 'restore'
   initialized.value = true
 }
 const restore = () => {
-  editor.restoreStoredDraft(isNew.value ? 'new' : id.value)
-  restorePrompt.value = false
+  editor.restoreStoredDraft(sessionKey.value)
+  activeDialog.value = null
 }
 const discardStored = () => {
-  editor.discardStoredDraft(isNew.value ? 'new' : id.value)
-  restorePrompt.value = false
+  editor.discardStoredDraft(sessionKey.value)
+  activeDialog.value = null
 }
 
 const updateTitle = (value: string) => {
@@ -67,15 +70,11 @@ const getValidatedDraft = (): Note | null => {
   }
 
   validationMessage.value = ''
-  return {
-    ...note,
-    title: note.title.trim(),
-    todos: note.todos.map((todo) => ({ ...todo, text: todo.text.trim() })),
-  }
+  return normalizeNoteContent(note)
 }
 
 const save = () => {
-  if (externalDeletionPrompt.value) return
+  if (activeDialog.value === 'external-delete') return
 
   const note = getValidatedDraft()
   if (!note) return
@@ -95,37 +94,37 @@ const saveCopyAfterExternalDelete = () => {
   notesStore.createNote(note.title, note.todos)
   notesStore.persistNow()
   editor.discardDraft()
-  externalDeletionPrompt.value = false
+  activeDialog.value = null
   router.push('/')
 }
 
-const leaveAfterExternalDelete = () => {
+const discardAndReturnToList = () => {
   editor.discardDraft()
-  externalDeletionPrompt.value = false
-  router.push('/')
-}
-const cancel = () => {
-  editor.discardDraft()
-  cancelPrompt.value = false
+  activeDialog.value = null
   router.push('/')
 }
 const remove = () => {
   if (!isNew.value) notesStore.deleteNote(id.value)
   notesStore.persistNow()
-  editor.discardDraft()
-  deletePrompt.value = false
-  router.push('/')
+  discardAndReturnToList()
 }
 const onKeydown = (event: KeyboardEvent) => {
-  if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'z') return
-  if (
-    event.target instanceof HTMLInputElement ||
-    event.target instanceof HTMLTextAreaElement ||
-    (event.target as HTMLElement | null)?.isContentEditable
-  )
-    return
+  if (event.defaultPrevented || hasOpenModal.value) return
+
+  const target = event.target
+  const isEditableTarget =
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    (target instanceof HTMLElement && target.isContentEditable)
+
+  if (isEditableTarget) return
+
+  const shortcut = getHistoryShortcut(event)
+  if (!shortcut) return
+
   event.preventDefault()
-  if (event.shiftKey) editor.redo()
+
+  if (shortcut === 'redo') editor.redo()
   else editor.undo()
 }
 
@@ -133,10 +132,6 @@ const persistDraftBeforeExit = () => {
   if (!editor.draft) return
   editor.flushTextChange()
   editor.persistDraftNow()
-}
-
-const onVisibilityChange = () => {
-  if (document.visibilityState === 'hidden') persistDraftBeforeExit()
 }
 
 const onStorage = (event: StorageEvent) => {
@@ -148,58 +143,65 @@ const onStorage = (event: StorageEvent) => {
     editor.draft &&
     !notesStore.getNoteById(id.value)
   ) {
-    cancelPrompt.value = false
-    deletePrompt.value = false
-    externalDeletionPrompt.value = true
+    activeDialog.value = 'external-delete'
   }
 }
 
-onMounted(() => {
-  initialize()
-  window.addEventListener('keydown', onKeydown)
-  window.addEventListener('storage', onStorage)
-  window.addEventListener('pagehide', persistDraftBeforeExit)
-  document.addEventListener('visibilitychange', onVisibilityChange)
-})
-onBeforeUnmount(() => {
-  persistDraftBeforeExit()
-  window.removeEventListener('keydown', onKeydown)
-  window.removeEventListener('storage', onStorage)
-  window.removeEventListener('pagehide', persistDraftBeforeExit)
-  document.removeEventListener('visibilitychange', onVisibilityChange)
+useEditorLifecycle({
+  initialize,
+  onKeydown,
+  onStorage,
+  persistDraft: persistDraftBeforeExit,
 })
 </script>
 
 <template>
-  <main v-if="initialized" class="editor-page">
-    <section v-if="missing" class="empty">
-      <h1>Заметка не найдена</h1>
-      <BaseLinkButton to="/">Вернуться к списку</BaseLinkButton>
+  <main v-if="initialized" class="note-editor">
+    <section v-if="missing" class="note-editor__empty">
+      <h1 class="note-editor__empty-title">Заметка не найдена</h1>
+      <BaseLinkButton class="note-editor__back-link" to="/">Вернуться к списку</BaseLinkButton>
     </section>
-    <template v-else-if="editor.draft"
-      ><header>
-        <BaseLinkButton to="/" tone="neutral">← Все заметки</BaseLinkButton>
-        <h1>{{ isNew ? 'Новая заметка' : 'Редактирование заметки' }}</h1>
+    <template v-else-if="editor.draft">
+      <header class="note-editor__header">
+        <BaseLinkButton class="note-editor__back-link" to="/" tone="neutral">
+          ← Все заметки
+        </BaseLinkButton>
+        <h1 class="note-editor__title">
+          {{ isNew ? 'Новая заметка' : 'Редактирование заметки' }}
+        </h1>
       </header>
-      <form @submit.prevent="save">
-        <label
-          >Название заметки<BaseInput
+      <form class="note-editor__form" @submit.prevent="save">
+        <label class="note-editor__field">
+          Название заметки
+          <BaseInput
             :model-value="editor.draft.title"
             placeholder="Например, Покупки"
             :invalid="Boolean(validationMessage) && !editor.draft.title.trim()"
             aria-describedby="editor-validation"
             @update:model-value="updateTitle"
             @blur="editor.flushTextChange"
-        /></label>
-        <p v-if="validationMessage" id="editor-validation" class="error" role="alert">
+          />
+        </label>
+        <p v-if="validationMessage" id="editor-validation" class="note-editor__error" role="alert">
           {{ validationMessage }}
         </p>
-        <div class="toolbar">
-          <BaseButton type="button" :disabled="!editor.canUndo" @click="editor.undo"
-            >Отменить</BaseButton
-          ><BaseButton type="button" :disabled="!editor.canRedo" @click="editor.redo"
-            >Повторить</BaseButton
+        <div class="note-editor__history-actions">
+          <BaseButton
+            type="button"
+            :disabled="!editor.canUndo"
+            aria-keyshortcuts="Control+Z Meta+Z"
+            @click="editor.undo"
           >
+            Отменить
+          </BaseButton>
+          <BaseButton
+            type="button"
+            :disabled="!editor.canRedo"
+            aria-keyshortcuts="Control+Shift+Z Control+Y Meta+Shift+Z"
+            @click="editor.redo"
+          >
+            Повторить
+          </BaseButton>
         </div>
         <TodoList
           :todos="editor.draft.todos"
@@ -210,43 +212,59 @@ onBeforeUnmount(() => {
           @update-text="updateTodoText"
           @flush="editor.flushTextChange"
         />
-        <footer class="actions">
-          <BaseButton type="button" @click="cancelPrompt = true">Отменить редактирование</BaseButton
-          ><BaseButton v-if="!isNew" type="button" variant="danger" @click="deletePrompt = true"
-            >Удалить</BaseButton
-          ><BaseButton type="submit" variant="primary">Сохранить</BaseButton>
+        <footer class="note-editor__actions">
+          <BaseButton type="button" @click="activeDialog = 'cancel'">
+            Отменить редактирование
+          </BaseButton>
+          <BaseButton v-if="!isNew" type="button" variant="danger" @click="activeDialog = 'delete'">
+            Удалить
+          </BaseButton>
+          <BaseButton type="submit" variant="primary">Сохранить</BaseButton>
         </footer>
-      </form></template
+      </form>
+    </template>
+    <ConfirmModal
+      :open="activeDialog === 'restore'"
+      title="Восстановить черновик?"
+      confirm-label="Восстановить"
+      cancel-label="Не восстанавливать"
+      confirm-variant="primary"
+      @cancel="discardStored"
+      @confirm="restore"
     >
-    <BaseModal :open="restorePrompt" title="Восстановить черновик?" @close="discardStored"
-      ><p>Найдены несохранённые изменения этой заметки.</p>
-      <template #footer
-        ><BaseButton @click="discardStored">Не восстанавливать</BaseButton
-        ><BaseButton variant="primary" @click="restore">Восстановить</BaseButton></template
-      ></BaseModal
-    ><BaseModal :open="cancelPrompt" title="Отменить редактирование?" @close="cancelPrompt = false"
-      ><p>Несохранённые изменения будут потеряны.</p>
-      <template #footer
-        ><BaseButton @click="cancelPrompt = false">Продолжить</BaseButton
-        ><BaseButton variant="danger" @click="cancel">Отменить изменения</BaseButton></template
-      ></BaseModal
-    ><BaseModal :open="deletePrompt" title="Удалить заметку?" @close="deletePrompt = false"
-      ><p>Это действие нельзя отменить.</p>
-      <template #footer
-        ><BaseButton @click="deletePrompt = false">Отмена</BaseButton
-        ><BaseButton variant="danger" @click="remove">Удалить</BaseButton></template
-      ></BaseModal
+      <p class="note-editor__dialog-message">Найдены несохранённые изменения этой заметки.</p>
+    </ConfirmModal>
+    <ConfirmModal
+      :open="activeDialog === 'cancel'"
+      title="Отменить редактирование?"
+      confirm-label="Отменить изменения"
+      cancel-label="Продолжить"
+      @cancel="activeDialog = null"
+      @confirm="discardAndReturnToList"
     >
+      <p class="note-editor__dialog-message">Несохранённые изменения будут потеряны.</p>
+    </ConfirmModal>
+    <ConfirmModal
+      :open="activeDialog === 'delete'"
+      title="Удалить заметку?"
+      confirm-label="Удалить"
+      @cancel="activeDialog = null"
+      @confirm="remove"
+    >
+      <p class="note-editor__dialog-message">Это действие нельзя отменить.</p>
+    </ConfirmModal>
     <BaseModal
-      :open="externalDeletionPrompt"
+      :open="activeDialog === 'external-delete'"
       title="Заметка удалена в другой вкладке"
       :closable="false"
       :close-on-escape="false"
       :close-on-backdrop="false"
     >
-      <p>Можно сохранить текущие изменения как новую заметку или вернуться к списку.</p>
+      <p class="note-editor__dialog-message">
+        Можно сохранить текущие изменения как новую заметку или вернуться к списку.
+      </p>
       <template #footer>
-        <BaseButton @click="leaveAfterExternalDelete">Вернуться к списку</BaseButton>
+        <BaseButton @click="discardAndReturnToList">Вернуться к списку</BaseButton>
         <BaseButton variant="primary" @click="saveCopyAfterExternalDelete">
           Сохранить как новую
         </BaseButton>
@@ -256,44 +274,44 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+@use '~/assets/styles/mixins' as *;
 @use '~/assets/styles/tokens' as *;
 
-.editor-page {
-  width: min(100% - $page-inline-offset, $editor-max-width);
-  margin: 0 auto;
+.note-editor {
+  @include page-container($editor-max-width);
   padding: $space-10 0;
 }
-.editor-page h1 {
+.note-editor__title,
+.note-editor__empty-title {
   margin: $space-4 0 $space-7;
 }
-.editor-page form {
+.note-editor__form {
   display: grid;
   gap: $space-6;
 }
-.editor-page label {
+.note-editor__field {
   display: grid;
   gap: $space-2;
   font-weight: $font-weight-bold;
 }
-.toolbar,
-.actions {
+.note-editor__history-actions,
+.note-editor__actions {
   display: flex;
   flex-wrap: wrap;
   gap: $space-2-5;
 }
-.actions {
+.note-editor__actions {
   justify-content: flex-end;
 }
-.error {
+.note-editor__error {
   margin: 0;
   color: $color-danger-hover;
 }
 @media (max-width: $breakpoint-mobile-max) {
-  .editor-page {
-    width: min(100% - $page-inline-offset-mobile, $editor-max-width);
+  .note-editor {
     padding-top: $space-6;
   }
-  .actions > * {
+  .note-editor__actions > * {
     flex: 1;
   }
 }

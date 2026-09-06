@@ -20,6 +20,8 @@ const modal = ref<HTMLElement | null>(null)
 const titleId = `modal-title-${useId()}`
 const descriptionId = `modal-description-${useId()}`
 let returnFocus: HTMLElement | null = null
+let previousBodyOverflow = ''
+let previousBodyPaddingRight = ''
 
 const focusableSelector = [
   'a[href]',
@@ -36,6 +38,27 @@ const close = (): void => {
 
 const onBackdropMouseDown = (): void => {
   if (props.closeOnBackdrop && props.closable) emit('close')
+}
+
+const lockPageScroll = (): void => {
+  const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+
+  previousBodyOverflow = document.body.style.overflow
+  previousBodyPaddingRight = document.body.style.paddingRight
+
+  if (scrollbarWidth > 0) {
+    const currentPaddingRight = Number.parseFloat(
+      window.getComputedStyle(document.body).paddingRight,
+    )
+    document.body.style.paddingRight = `${currentPaddingRight + scrollbarWidth}px`
+  }
+
+  document.body.style.overflow = 'hidden'
+}
+
+const unlockPageScroll = (): void => {
+  document.body.style.overflow = previousBodyOverflow
+  document.body.style.paddingRight = previousBodyPaddingRight
 }
 
 const onKeydown = (event: KeyboardEvent) => {
@@ -69,53 +92,61 @@ const onKeydown = (event: KeyboardEvent) => {
 watch(
   () => props.open,
   async (open) => {
+    if (typeof document === 'undefined') return
+
     if (open) {
       returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
       await nextTick()
       const initialFocusTarget = modal.value?.querySelector<HTMLElement>(focusableSelector)
       if (initialFocusTarget) initialFocusTarget.focus()
       else modal.value?.focus()
-      document.body.style.overflow = 'hidden'
+      lockPageScroll()
     } else {
-      document.body.style.overflow = ''
-      returnFocus?.focus()
+      unlockPageScroll()
+      const focusTarget = returnFocus
       returnFocus = null
+      await nextTick()
+      focusTarget?.focus()
     }
   },
+  { immediate: true },
 )
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = ''
+  if (typeof document !== 'undefined') {
+    unlockPageScroll()
+  }
 })
 </script>
 <template>
-  <Teleport to="body"
-    ><div v-if="open" class="backdrop" @mousedown.self="onBackdropMouseDown">
+  <Teleport to="body">
+    <div v-if="open" class="base-modal__backdrop" @mousedown.self="onBackdropMouseDown">
       <section
         ref="modal"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
         :aria-describedby="descriptionId"
-        class="modal"
+        class="base-modal"
         tabindex="-1"
         @keydown="onKeydown"
       >
-        <header>
-          <h2 :id="titleId">{{ title }}</h2>
+        <header class="base-modal__header">
+          <h2 :id="titleId" class="base-modal__title">{{ title }}</h2>
           <BaseIconButton v-if="closable" label="Закрыть" @click="close">
-            <span aria-hidden="true">×</span>
+            <span class="base-modal__close-icon" aria-hidden="true">×</span>
           </BaseIconButton>
         </header>
-        <div :id="descriptionId"><slot /></div>
-        <footer><slot name="footer" /></footer>
-      </section></div
-  ></Teleport>
+        <div :id="descriptionId" class="base-modal__content"><slot /></div>
+        <footer class="base-modal__footer"><slot name="footer" /></footer>
+      </section>
+    </div>
+  </Teleport>
 </template>
 <style scoped lang="scss">
 @use '~/assets/styles/tokens' as *;
 
-.backdrop {
+.base-modal__backdrop {
   position: fixed;
   z-index: $z-index-modal;
   inset: 0;
@@ -124,32 +155,32 @@ onBeforeUnmount(() => {
   padding: $space-5;
   background: $color-backdrop;
 }
-.modal {
+.base-modal {
   width: min(100%, $modal-max-width);
   border-radius: $radius-xl;
   background: $color-surface-raised;
   box-shadow: $shadow-modal;
 }
-.modal header,
-.modal footer {
+.base-modal__header,
+.base-modal__footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: $space-3;
   padding: $space-4-5 $space-5;
 }
-.modal header {
+.base-modal__header {
   border-bottom: $border-width solid $color-border-default;
 }
-.modal h2 {
+.base-modal__title {
   margin: 0;
   font-size: $font-size-heading-sm;
 }
-.modal > div {
+.base-modal__content {
   padding: $space-5;
   color: $color-text-secondary;
 }
-.modal footer {
+.base-modal__footer {
   justify-content: end;
   border-top: $border-width solid $color-border-default;
 }
