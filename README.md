@@ -1,100 +1,69 @@
 # Notes App
 
-SPA-приложение для заметок и Todo на Nuxt 4, Composition API, Pinia и TypeScript strict.
+`Небольшое SPA для заметок и задач. Проект написан на Nuxt 4 с Composition API, Pinia и TypeScript в strict-режиме. Данные хранятся в `localStorage`, сервер и API не требуются.
 
-## Запуск
+## Быстрый старт
 
-Требования: Bun и Node.js 24+.
+Для работы нужны Bun и Node.js 24 или новее.
 
 ```bash
 bun install
 bun run dev
 ```
 
-Приложение будет доступно по адресу `http://localhost:3000`.
+После запуска приложение доступно на `http://localhost:3000`.
 
-Production-проверка:
+Перед первым запуском E2E-тестов установите браузеры Playwright:
 
 ```bash
-bun run build
-bun run preview
+bun run test:e2e:install
 ```
 
-Запуск через Docker:
+## Docker
+
+Production-образ собирается и запускается на `http://localhost:3000`:
 
 ```bash
 docker compose up --build
+# или
+bun run docker:prod
 ```
 
-## Проверки
+Режим разработки использует bind mount и hot reload, адрес — `http://localhost:3001`:
 
 ```bash
-bun run lint
-bun run typecheck
-bun run test
-bun run test:e2e
-bun run build
+docker compose --profile development up --build notes-app-dev
+# или
+bun run docker:dev
 ```
 
-## Архитектура
+Перед запуском dev-контейнер синхронизирует зависимости по `bun.lock`. Это нужно, чтобы именованный том `node_modules` не сохранял устаревший набор пакетов после изменения зависимостей.
 
-- `app/pages` — маршруты списка заметок и редактора, получение данных и orchestration.
-- `app/components/notes` — карточка, список Todo и отдельный Todo item.
-- `app/components/ui` — собственные Button, IconButton, LinkButton, Input, Checkbox и Modal.
-- `app/stores` — состояние заметок и отдельная сессия редактора.
-- `app/services` — ручная работа с localStorage и версионирование persisted state.
-- `app/utils` — чистые операции над заметкой и memory-efficient history.
-- `app/types` — доменные типы Note, Todo и history operations.
+## Команды
 
-## Design tokens
+```bash
+bun run check         # все проверки без изменения файлов
+bun run check:fix     # форматирование, затем все проверки
+bun run lint          # ESLint
+bun run validate:html # html-validate и проверка Vue template
+bun run typecheck     # vue-tsc через Nuxt
+bun run format:check  # проверка форматирования
+bun run format        # форматирование исходников
+bun run test          # unit-тесты Vitest
+bun run test:a11y     # axe-core: WCAG A/AA аудит в Chromium
+bun run test:e2e      # Playwright: Chromium, Firefox и WebKit
+bun run build         # production-сборка
+bun run preview       # локальный запуск собранного приложения
+```
 
-Все повторяющиеся визуальные значения собраны в `app/assets/styles/_tokens.scss`. Токены
-разделены на core palette, semantic colors, typography, spacing, component sizing/layout,
-borders/radii, elevation/focus, motion, state opacity, layers и breakpoints. Компоненты используют
-семантические имена вроде `$color-primary`, `$color-text-muted` и `$color-border-control`, поэтому
-палитру и состояния интерфейса можно менять централизованно.
+## Устройство проекта
 
-## Undo / Redo
+Маршруты лежат в `app/pages`: список заметок и редактор. Компоненты предметной области находятся в `app/components/notes`, а общие элементы интерфейса — в `app/components/ui`. Это собственные SCSS-компоненты: Element Plus использовался только как визуальный и структурный reference и не установлен в runtime.
 
-История реализована без сторонних библиотек и без полных снимков заметки. В стеках хранятся
-компактные операции с данными для прямого и обратного применения. История ограничена 50 шагами,
-а новое изменение после Undo очищает ветку Redo. Непрерывный ввод группируется в один шаг по
-паузе 600 мс или по blur. После Save и Cancel история очищается.
+`app/stores/notes.ts` отвечает за коллекцию заметок, `app/stores/editor.ts` — за одну сессию редактирования. Слой `app/services` изолирует работу с `localStorage`, валидацию данных и `schemaVersion`; в `app/utils` находятся операции истории, debounce и функции для модели заметки. Общие стили и семантические дизайн-токены собраны в `app/assets/styles/_tokens.scss`, а повторяющаяся геометрия страниц — в `_mixins.scss`.
 
-## Persistence и черновики
+История Undo/Redo хранит компактные операции, а не снимки заметки. Она ограничена 50 шагами; непрерывный ввод объединяется в один шаг после паузы 600 мс или потери фокуса. Новое изменение после Undo очищает ветку Redo, а Save и Cancel сбрасывают историю. Вне текстовых полей работают `Ctrl+Z`, `Ctrl+Shift+Z` и `Ctrl+Y` на Windows/Linux, `Cmd+Z` и `Cmd+Shift+Z` на macOS. В `input`, `textarea` и contenteditable-элементах эти сочетания остаются нативными для браузера.
 
-Заметки сохраняются в localStorage вручную с debounce и полем `schemaVersion`. Черновик текущей
-сессии хранится отдельно, сохраняется с debounce и принудительно записывается при `pagehide`,
-переходе вкладки в background и размонтировании редактора. После перезагрузки пользователь может
-восстановить или удалить найденный черновик.
+Заметки и черновики сохраняются вручную с debounce. Черновик записывается отдельно и принудительно синхронизируется при `pagehide`, уходе вкладки в background и размонтировании редактора. Пустая новая заметка не создаёт запись в хранилище. При следующем открытии редактор предлагает восстановить или удалить найденный черновик. Событие `storage` поддерживает работу в нескольких вкладках: если заметку удалили в другой вкладке, редактор предлагает сохранить текущие изменения как новую заметку или вернуться к списку.
 
-Событие `storage` синхронизирует вкладки. Если редактируемую заметку удалили в другой вкладке,
-редактор предлагает сохранить изменения как новую заметку либо вернуться к списку.
-
-## Modal и accessibility
-
-Собственный `BaseModal` использует semantic HTML, `role="dialog"`, `aria-modal`,
-`aria-labelledby` и `aria-describedby`. Реализованы focus trap, Escape, Tab/Shift+Tab, начальный
-фокус, блокировка прокрутки страницы и возврат фокуса после закрытия.
-
-## UI
-
-Element Plus не установлен и не используется в runtime. Его документация применялась только как
-визуальный и структурный reference для состояний Checkbox, Input, Button, Dialog и list-like UI.
-Вся итоговая разметка и SCSS написаны в проекте самостоятельно.
-
-## Тесты
-
-Vitest покрывает:
-
-- add/remove/edit/toggle и Undo/Redo;
-- очистку redo-ветки и лимит истории 50;
-- группировку непрерывного ввода и сброс истории;
-- CRUD и debounce notes store;
-- загрузку и `schemaVersion` persisted state;
-- сохранение, восстановление и удаление draft;
-- синхронизацию удаления через storage event;
-- некорректные данные в localStorage.
-
-Playwright проверяет список, редактор, modal, keyboard/focus и отсутствие горизонтального overflow
-на desktop, tablet и mobile viewport.
+Модальные окна реализованы в `BaseModal`: используются `role="dialog"`, `aria-modal`, корректные связи заголовка и описания, ловушка фокуса, Escape, возврат фокуса и блокировка прокрутки. Unit-тесты покрывают доменную логику, историю, storage и drafts; E2E-тесты проверяют страницы, модальные окна, клавиатурные сценарии, адаптивность и отсутствие горизонтального overflow на desktop, tablet и mobile.
