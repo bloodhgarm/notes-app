@@ -1,29 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  NOTES_SCHEMA_VERSION,
-  NOTES_STORAGE_KEY,
-  readNotes,
-  writeNotes,
-} from './notes-storage'
+import { createMemoryStorage } from '~/test-utils/storage'
 
-const createStorage = (): Storage => {
-  const values = new Map<string, string>()
-
-  return {
-    get length() {
-      return values.size
-    },
-    clear: () => values.clear(),
-    getItem: (key) => values.get(key) ?? null,
-    key: (index) => [...values.keys()][index] ?? null,
-    removeItem: (key) => values.delete(key),
-    setItem: (key, value) => values.set(key, value),
-  }
-}
+import { NOTES_SCHEMA_VERSION, NOTES_STORAGE_KEY, readNotes, writeNotes } from './notes-storage'
 
 describe('notes storage', () => {
-  const storage = createStorage()
+  const storage = createMemoryStorage()
 
   beforeEach(() => {
     storage.clear()
@@ -62,10 +44,7 @@ describe('notes storage', () => {
     storage.setItem(NOTES_STORAGE_KEY, '{not-json')
     expect(readNotes().notes).toEqual([])
 
-    storage.setItem(
-      NOTES_STORAGE_KEY,
-      JSON.stringify({ schemaVersion: 99, notes: [] }),
-    )
+    storage.setItem(NOTES_STORAGE_KEY, JSON.stringify({ schemaVersion: 99, notes: [] }))
     expect(readNotes().notes).toEqual([])
   })
 })

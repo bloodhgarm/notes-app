@@ -41,7 +41,10 @@ export const revertOperation = (note: Note, operation: NoteOperation): Note => {
     case 'set-todo-text':
       return updateTodo(note, operation.todoId, (todo) => ({ ...todo, text: operation.previous }))
     case 'toggle-todo':
-      return updateTodo(note, operation.todoId, (todo) => ({ ...todo, completed: operation.previous }))
+      return updateTodo(note, operation.todoId, (todo) => ({
+        ...todo,
+        completed: operation.previous,
+      }))
     case 'add-todo':
       return {
         ...note,
